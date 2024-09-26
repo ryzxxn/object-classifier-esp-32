@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Classifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #image-preview {
+            margin-top: 20px;
+        }
+        #prediction {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Classifier</h1>
+    <button id="predict-button">Predict</button>
+    <div id="image-preview"></div>
+    <div id="prediction"></div>
+
+    <script>
+        document.getElementById('predict-button').addEventListener('click', function() {
+            const imageUrl = 'http://192.168.0.154/capture'; // Replace with your image URL
+            fetch(`http://192.168.0.10:5000/predict?image_url=${imageUrl}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        document.getElementById('image-preview').innerHTML = `<img src="data:image/png;base64,${data.image_preview}" alt="Image Preview">`;
+                        document.getElementById('prediction').innerText = `Predicted Label: ${data.predicted_label}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while making the prediction.');
+                });
+        });
+    </script>
+</body>
+</html>
