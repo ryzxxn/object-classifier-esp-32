@@ -1,66 +1,95 @@
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import requests
+import io
+import torch
+import torch.nn as nn
+import torchvision.transforms as transforms
+from torchvision import models
 from PIL import Image
-from io import BytesIO
-import numpy as np
+from flask import Flask, request, jsonify
+import requests
 import base64
+from flask_cors import CORS
 
-# Load the trained model
-model = load_model('object_classifier_model.keras')
-
-# Define constants
-IMAGE_SIZE = (384, 512)  # Swap the dimensions
-
-# Create a Flask app
 app = Flask(__name__)
-
-# Enable CORS for all routes
 CORS(app)
 
-# Function to preprocess the image
-def preprocess_image(image_url):
-    response = requests.get(image_url)
-    img = Image.open(BytesIO(response.content))
-    img = img.resize(IMAGE_SIZE)
-    img_array = np.array(img) / 255.0  # Normalize the image
-    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
-    print(f"Image shape after preprocessing: {img_array.shape}")  # Debugging information
-    return img, img_array
+# Load the trained model
+model_path = 'object_classifier_model.pth'
+model = models.mobilenet_v2(weights=None)
+num_ftrs = model.classifier[1].in_features
 
-# Function to encode the image as a base64 string
-def encode_image_to_base64(image):
-    buffered = BytesIO()
-    image.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-    return img_str
+# Load the state dictionary to determine the number of classes
+state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+num_classes = state_dict['classifier.3.weight'].size(0)
+
+# Define the classifier layer with the correct number of classes
+model.classifier = nn.Sequential(
+    nn.Dropout(0.2),
+    nn.Linear(num_ftrs, 1024),
+    nn.ReLU(),
+    nn.Linear(1024, num_classes)
+)
+
+# Load the state dictionary into the model
+model.load_state_dict(state_dict)
+model.eval()
+
+# Define the image preprocessing transform
+transform = transforms.Compose([
+    transforms.Resize((512, 384)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
+
+# Define the class names (replace with your actual class names)
+class_names = {
+    0: 'Cardboard',
+    1: 'glass',
+    2: 'metal',
+    3: 'Paper',
+    4: 'Plastic',
+    5: 'trash',
+    # Add more class names as needed
+}
+
+# Function to fetch and preprocess the image
+def fetch_and_preprocess_image(image_url):
+    response = requests.get(image_url)
+    if response.status_code == 200:
+        image = Image.open(io.BytesIO(response.content))
+        image = transform(image).unsqueeze(0)  # Add batch dimension
+        return image
+    else:
+        return None
+
+# Function to make a prediction
+def predict(image):
+    with torch.no_grad():
+        outputs = model(image)
+        _, preds = torch.max(outputs, 1)
+        return preds.item()
 
 # Define the prediction endpoint
 @app.route('/predict', methods=['GET'])
-def predict():
+def predict_image():
     image_url = request.args.get('image_url')
-
     if not image_url:
-        return jsonify({'error': 'No image URL provided'}), 400
+        return jsonify({'error': 'Image URL is required'}), 400
 
-    try:
-        img, img_array = preprocess_image(image_url)
-        prediction = model.predict(img_array)
-        predicted_class = np.argmax(prediction, axis=1)[0]
+    image = fetch_and_preprocess_image(image_url)
+    if image is None:
+        return jsonify({'error': 'Failed to fetch the image'}), 500
 
-        # Assuming you have the class indices from the training data generator
-        class_indices = {0: 'cardboard', 1: 'glass', 2: 'metal', 3: 'paper', 4: 'plastic', 5: 'trash'}
-        predicted_label = class_indices[predicted_class]
+    predicted_label_index = predict(image)
+    predicted_label_name = class_names.get(predicted_label_index, 'Unknown')
 
-        # Encode the image as a base64 string
-        img_base64 = encode_image_to_base64(img)
+    # Convert the image to base64 for preview
+    response = requests.get(image_url)
+    image_preview = base64.b64encode(response.content).decode('utf-8')
 
-        return jsonify({'predicted_label': predicted_label, 'image_preview': img_base64})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    return jsonify({
+        'image_preview': image_preview,
+        'predicted_label': predicted_label_name
+    })
 
-# Run the Flask app
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
