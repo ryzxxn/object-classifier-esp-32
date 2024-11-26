@@ -101,7 +101,7 @@ def predict_image():
     return jsonify({
         'image_preview': image_preview,
         'predicted_label': predicted_label_name,
-        'servo_status': servo_status,
+        # 'servo_status': servo_status,
     })
 
 if __name__ == '__main__':
