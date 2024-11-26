@@ -35,7 +35,7 @@ model.eval()
 
 # Define the image preprocessing transform
 transform = transforms.Compose([
-    transforms.Resize((512, 384)),
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
@@ -43,11 +43,11 @@ transform = transforms.Compose([
 # Define the class names (replace with your actual class names)
 class_names = {
     0: 'Cardboard',
-    1: 'glass',
-    2: 'metal',
+    1: 'Glass',
+    2: 'Metal',
     3: 'Paper',
     4: 'Plastic',
-    5: 'trash',
+    5: 'Trash',
     # Add more class names as needed
 }
 
@@ -68,6 +68,12 @@ def predict(image):
         _, preds = torch.max(outputs, 1)
         return preds.item()
 
+# Function to send a request to move the servo
+def move_servo(servo_degree):
+    url = f'http://192.168.0.100/servo?servo={servo_degree}'
+    response = requests.get(url)
+    return response.status_code
+
 # Define the prediction endpoint
 @app.route('/predict', methods=['GET'])
 def predict_image():
@@ -86,9 +92,16 @@ def predict_image():
     response = requests.get(image_url)
     image_preview = base64.b64encode(response.content).decode('utf-8')
 
+    # Move the servo based on the predicted label index
+    if(predicted_label_index == 0):
+        servo_status = move_servo(15)
+    else:
+        servo_status = move_servo(predicted_label_index * 15 * 2)
+
     return jsonify({
         'image_preview': image_preview,
-        'predicted_label': predicted_label_name
+        'predicted_label': predicted_label_name,
+        'servo_status': servo_status,
     })
 
 if __name__ == '__main__':

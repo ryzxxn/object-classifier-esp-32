@@ -1,0 +1,99 @@
+{
+    "type": "body",
+    "style": {
+      "fontFamily": "Arial, sans-serif",
+      "backgroundColor": "#f0f0f0",
+      "margin": "0",
+      "padding": "0"
+    },
+    "children": [
+      {
+        "type": "header",
+        "style": {
+          "backgroundColor": "#4CAF50",
+          "color": "white",
+          "padding": "15px",
+          "textAlign": "center"
+        },
+        "children": [
+          {
+            "type": "h1",
+            "text": "Welcome to My Website"
+          }
+        ]
+      },
+      {
+        "type": "main",
+        "style": {
+          "padding": "20px",
+          "backgroundColor": "white"
+        },
+        "children": [
+          {
+            "type": "section",
+            "style": {
+              "marginBottom": "20px"
+            },
+            "children": [
+              {
+                "type": "h2",
+                "text": "About Us"
+              },
+              {
+                "type": "p",
+                "text": "We are a company dedicated to providing the best services to our customers."
+              }
+            ]
+          },
+          {
+            "type": "section",
+            "style": {
+              "marginBottom": "20px"
+            },
+            "children": [
+              {
+                "type": "h2",
+                "text": "Our Services"
+              },
+              {
+                "type": "ul",
+                "children": [
+                  {
+                    "type": "li",
+                    "text": "Service 1"
+                  },
+                  {
+                    "type": "li",
+                    "text": "Service 2"
+                  },
+                  {
+                    "type": "li",
+                    "text": "Service 3"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "footer",
+        "style": {
+          "backgroundColor": "#333",
+          "color": "white",
+          "textAlign": "center",
+          "padding": "10px",
+          "position": "fixed",
+          "width": "100%",
+          "bottom": "0"
+        },
+        "children": [
+          {
+            "type": "p",
+            "text": "© 2023 My Website. All rights reserved."
+          }
+        ]
+      }
+    ]
+  }
+  

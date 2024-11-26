@@ -26,8 +26,8 @@
 
     <script>
         document.getElementById('predict-button').addEventListener('click', function() {
-            const imageUrl = 'http://192.168.0.154/capture'; // Replace with your image URL
-            fetch(`http://192.168.0.10:5000/predict?image_url=${imageUrl}`)
+            const imageUrl = 'http://192.168.0.100/capture'; // Replace with your image URL
+            fetch(`http://localhost:5000/predict?image_url=${imageUrl}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
