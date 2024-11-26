@@ -16,18 +16,28 @@
             font-size: 1.2em;
             font-weight: bold;
         }
+        #ip-input {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Image Classifier</h1>
+    <input type="text" id="ip-input" placeholder="Enter IP address" required>
     <button id="predict-button">Predict</button>
     <div id="image-preview"></div>
     <div id="prediction"></div>
 
     <script>
         document.getElementById('predict-button').addEventListener('click', function() {
-            const imageUrl = 'http://192.168.0.100/capture'; // Replace with your image URL
-            fetch(`http://localhost:5000/predict?image_url=${imageUrl}`)
+            const ipInput = document.getElementById('ip-input').value.trim();
+            if (!ipInput) {
+                alert('IP address is required.');
+                return;
+            }
+
+            const imageUrl = `http://${ipInput}/capture`;
+            fetch(`http://localhost:5000/predict?image_url=${encodeURIComponent(imageUrl)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
