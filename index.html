@@ -37,7 +37,7 @@
             }
 
             const imageUrl = `http://${ipInput}/capture`;
-            fetch(`http://localhost:5000/predict?image_url=${encodeURIComponent(imageUrl)}`)
+            fetch(`http://localhost:5000/predict?image_url=${imageUrl}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
